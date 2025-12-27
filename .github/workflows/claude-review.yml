@@ -1,0 +1,41 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: PR Review with Progress Tracking
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: |
+            --model claude-3-5-haiku-20241022
+            --allowedTools "Read" "Glob" "Grep" "Bash(gh pr:*)" "Bash(gh api:*)" "Bash(git:*)"
+          prompt: |
+            Review PR #${{ github.event.pull_request.number }} for code quality, potential bugs, and best practices.
+
+            First, use 'gh pr diff ${{ github.event.pull_request.number }}' to see the changes.
+            Then read the modified files to understand the context.
+
+            Provide constructive feedback on:
+            - Code correctness and logic errors
+            - Potential bugs or edge cases
+            - Performance considerations
+            - Security issues (especially Telegram token handling)
+            - Code style and maintainability
+            - Async/await usage correctness
+
+            After reviewing, submit a PR review with your findings using 'gh pr review ${{ github.event.pull_request.number }}'.
