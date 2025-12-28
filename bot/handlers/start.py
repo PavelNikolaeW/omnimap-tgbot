@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes
 
 from bot.api.client import OmniMapClient
 from bot.config import settings
-from bot.keyboards.inline import get_start_keyboard, get_link_keyboard
+from bot.keyboards.inline import get_start_keyboard, get_link_keyboard, get_help_keyboard
 
 logger = logging.getLogger(__name__)
 client = OmniMapClient()
@@ -31,13 +31,26 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             reply_markup=get_start_keyboard(),
         )
     else:
-        await update.message.reply_text(
-            f"Привет, {user.first_name}! 👋\n\n"
-            f"Я бот OmniMap для получения уведомлений.\n\n"
-            f"Чтобы привязать аккаунт, нажмите кнопку ниже "
-            f"или перейдите в настройки профиля на сайте.",
-            reply_markup=get_link_keyboard(settings.frontend_url, user.id),
-        )
+        keyboard = get_link_keyboard(settings.frontend_url, user.id)
+        link_url = f"{settings.frontend_url}/settings/telegram?link={user.id}"
+
+        if keyboard:
+            await update.message.reply_text(
+                f"Привет, {user.first_name}! 👋\n\n"
+                f"Я бот OmniMap для получения уведомлений.\n\n"
+                f"Чтобы привязать аккаунт, нажмите кнопку ниже "
+                f"или перейдите в настройки профиля на сайте.",
+                reply_markup=keyboard,
+            )
+        else:
+            await update.message.reply_text(
+                f"Привет, {user.first_name}! 👋\n\n"
+                f"Я бот OmniMap для получения уведомлений.\n\n"
+                f"Чтобы привязать аккаунт, откройте эту ссылку в браузере:\n"
+                f"{link_url}\n\n"
+                f"Или перейдите в настройки профиля на сайте OmniMap.",
+                reply_markup=get_help_keyboard(),
+            )
 
 
 async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
